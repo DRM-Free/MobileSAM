@@ -3,6 +3,9 @@ import os
 import gradio as gr
 import numpy as np
 import torch
+sam_path = "/data3/anael/repos/MobileSAM"
+import sys
+sys.path.append(sam_path)
 from mobile_sam import SamAutomaticMaskGenerator, SamPredictor, sam_model_registry
 from PIL import ImageDraw
 from utils.tools import box_prompt, format_results, point_prompt
@@ -325,5 +328,6 @@ with gr.Blocks(css=css, title="Faster Segment Anything(MobileSAM)") as demo:
     # clear_btn_e.click(clear, outputs=[cond_img_e, segm_img_e])
     clear_btn_p.click(clear, outputs=[cond_img_p, segm_img_p])
 
-demo.queue()
-demo.launch()
+if __name__ == "__main__":
+	demo.queue()
+	demo.launch(share=True)

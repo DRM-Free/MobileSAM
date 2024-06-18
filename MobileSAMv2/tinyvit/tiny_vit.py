@@ -15,8 +15,14 @@ import torch.utils.checkpoint as checkpoint
 from timm.models.layers import DropPath as TimmDropPath,\
     to_2tuple, trunc_normal_
 from timm.models.registry import register_model
-from typing import Tuple
+from typing import Tuple, List
 
+@torch.jit.script
+def torchscript_sum(input_list: List[int]) -> int:
+    total = 0
+    for item in input_list:
+        total += item
+    return total
 
 class Conv2d_BN(torch.nn.Sequential):
     def __init__(self, a, b, ks=1, stride=1, pad=0, dilation=1,
@@ -488,32 +494,30 @@ class TinyViT(nn.Module):
 
         patches_resolution = self.patch_embed.patches_resolution
         self.patches_resolution = patches_resolution
-
+        #SEE : list comprehension is partially supported by torchscript/
         # stochastic depth
-        dpr = [x.item() for x in torch.linspace(0, drop_path_rate,
-                                                sum(depths))]  # stochastic depth decay rule
-
+        #dpr = [x.item() for x in torch.linspace(0, drop_path_rate,
+                                                torchscript_sum(depths))]  # stochastic depth decay rule
+        dpr = torch.Tensor([0.0000, 0.0091, 0.0182, 0.0273, 0.0364, 0.0455, 0.0545, 0.0636, 0.0727,0.0818, 0.0909, 0.1000])
         # build layers
         self.layers = nn.ModuleList()
         for i_layer in range(self.num_layers):
-            kwargs = dict(dim=embed_dims[i_layer],
-                        input_resolution=(patches_resolution[0] // (2 ** (i_layer-1 if i_layer == 3 else i_layer)),
-                                patches_resolution[1] // (2 ** (i_layer-1 if i_layer == 3 else i_layer))),
-                        #   input_resolution=(patches_resolution[0] // (2 ** i_layer),
-                        #                     patches_resolution[1] // (2 ** i_layer)),
-                          depth=depths[i_layer],
-                          drop_path=dpr[sum(depths[:i_layer]):sum(depths[:i_layer + 1])],
-                          downsample=PatchMerging if (
-                              i_layer < self.num_layers - 1) else None,
-                          use_checkpoint=use_checkpoint,
-                          out_dim=embed_dims[min(
-                              i_layer + 1, len(embed_dims) - 1)],
-                          activation=activation,
-                          )
             if i_layer == 0:
                 layer = ConvLayer(
-                    conv_expand_ratio=mbconv_expand_ratio,
-                    **kwargs,
+                    conv_expand_ratio=4.0,
+                    dim=embed_dims[i_layer],
+                    input_resolution=(patches_resolution[0] // (2 ** (i_layer-1 if i_layer == 3 else i_layer)),
+                    patches_resolution[1] // (2 ** (i_layer-1 if i_layer == 3 else i_layer))),
+                    #   input_resolution=(patches_resolution[0] // (2 ** i_layer),
+                    #                     patches_resolution[1] // (2 ** i_layer)),
+                    depth=depths[i_layer],
+                    drop_path=dpr[torchscript_sum(depths[:i_layer]):torchscript_sum(depths[:i_layer + 1])],
+                    downsample=PatchMerging if (
+                          i_layer < self.num_layers - 1) else None,
+                    use_checkpoint=use_checkpoint,
+                    out_dim=embed_dims[min(
+                          i_layer + 1, len(embed_dims) - 1)],
+                    activation=activation
                 )
             else:
                 layer = BasicLayer(
@@ -521,8 +525,21 @@ class TinyViT(nn.Module):
                     window_size=window_sizes[i_layer],
                     mlp_ratio=self.mlp_ratio,
                     drop=drop_rate,
-                    local_conv_size=local_conv_size,
-                    **kwargs)
+                    local_conv_size=3,
+                    dim=embed_dims[i_layer],
+                    input_resolution=(patches_resolution[0] // (2 ** (i_layer-1 if i_layer == 3 else i_layer)),
+                    patches_resolution[1] // (2 ** (i_layer-1 if i_layer == 3 else i_layer))),
+                    #   input_resolution=(patches_resolution[0] // (2 ** i_layer),
+                    #                     patches_resolution[1] // (2 ** i_layer)),
+                    depth=depths[i_layer],
+                    drop_path=dpr[torchscript_sum(depths[:i_layer]):torchscript_sum(depths[:i_layer + 1])],
+                    downsample=PatchMerging if (
+                          i_layer < self.num_layers - 1) else None,
+                    use_checkpoint=use_checkpoint,
+                    out_dim=embed_dims[min(
+                          i_layer + 1, len(embed_dims) - 1)],
+                    activation=activation
+)
             self.layers.append(layer)
 
         # Classifier head
