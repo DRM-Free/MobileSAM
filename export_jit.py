@@ -20,24 +20,25 @@ image = np.zeros((image_size[1], image_size[0], 3), dtype=np.uint8)
 input_image = transform.apply_image(image)
 input_image_torch = torch.as_tensor(input_image, device='cpu')
 input_image_torch = input_image_torch.permute(
-    2, 0, 1).contiguous()[None, :, :, :]
+	2, 0, 1).contiguous()[None, :, :, :]
 
 
 class Model(torch.nn.Module):
-    def __init__(self, image_size, checkpoint, model_type):
-        super().__init__()
-        self.sam = sam_model_registry[model_type](checkpoint=checkpoint)
-        self.sam.to(device='cpu')
-        self.predictor = SamPredictor(self.sam)
-        self.image_size = image_size
+	def __init__(self, image_size, checkpoint, model_type):
+		super().__init__()
+		self.sam = sam_model_registry[model_type](checkpoint=checkpoint)
+		self.sam.to(device='cpu')
+		self.predictor = SamPredictor(self.sam)
+		self.image_size = image_size
 
-    def forward(self, x):
-        self.predictor.set_torch_image(x, (self.image_size))
-        if 'interm_embeddings' not in output_names:
-            return self.predictor.get_image_embedding()
-        else:
-            return self.predictor.get_image_embedding(), torch.stack(self.predictor.interm_features, dim=0)
-
+	def forward(self, x):
+		self.predictor.set_torch_image(x, (self.image_size))
+		masks, scores, logits = self.predictor.predict(
+		point_coords=[[0,0]],
+		point_labels=[0],
+		multimask_output=True,
+	)
+		return logits
 
 model = Model(image_size, checkpoint, model_type)
-model_trace = torch.jit.trace(model, input_image_torch).save("mobilesam.pt")
+model_trace = torch.jit.trace(model, input_image_torch).save("mobilesam_logits.pt")
