@@ -496,8 +496,7 @@ class TinyViT(nn.Module):
         self.patches_resolution = patches_resolution
         #SEE : list comprehension is partially supported by torchscript/
         # stochastic depth
-        #dpr = [x.item() for x in torch.linspace(0, drop_path_rate,
-                                                torchscript_sum(depths))]  # stochastic depth decay rule
+        #dpr = [x.item() for x in torch.linspace(0, drop_path_rate, torchscript_sum(depths))]  # stochastic depth decay rule
         dpr = torch.Tensor([0.0000, 0.0091, 0.0182, 0.0273, 0.0364, 0.0455, 0.0545, 0.0636, 0.0727,0.0818, 0.0909, 0.1000])
         # build layers
         self.layers = nn.ModuleList()

@@ -10,6 +10,10 @@ import torch.nn as nn
 from functools import partial
 
 from .modeling import ImageEncoderViT, MaskDecoder, PromptEncoder, Sam, TwoWayTransformer
+
+import sys
+sys.path.append("/data3/anael/repos/MobileSAM/MobileSAMv2")
+
 from tinyvit.tiny_vit import TinyViT#11000 
 from efficientvit.models.efficientvit.backbone import EfficientViTLargeBackbone
 from efficientvit.models.efficientvit.sam import SamNeck, EfficientViTSamImageEncoder
