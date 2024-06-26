@@ -16,7 +16,7 @@ from .prompt_encoder import PromptEncoder
 
 
 class Sam(nn.Module):
-	mask_threshold: float = 0.0
+	#mask_threshold: float = 0.0
 	image_format: str = "RGB"
 
 	def __init__(
@@ -40,6 +40,7 @@ class Sam(nn.Module):
 		  pixel_std (list(float)): Std values for normalizing pixels in the input image.
 		"""
 		super().__init__()
+		self.mask_threshold: float = 0.0
 		self.image_encoder = image_encoder
 		self.prompt_encoder = prompt_encoder
 		self.mask_decoder = mask_decoder
@@ -103,8 +104,7 @@ class Sam(nn.Module):
 		# gpu_name =input_images.get_device()
 		# print('handongshen123123',gpu_name)
 		image_embeddings = self.image_encoder(input_images)
-		outputs = []
-
+		outputs: List[Dict[str, torch.Tensor]] = list()
 		for image_record, curr_embedding in zip(batched_input, image_embeddings):
 			if "point_coords" in image_record:
 				points = (image_record["point_coords"], image_record["point_labels"])
@@ -128,10 +128,14 @@ class Sam(nn.Module):
 				dense_prompt_embeddings=dense_embeddings,
 				multimask_output=multimask_output,
 			)
+			input_image = image_record["image"]
+			assert torch.jit.isinstance(input_image,torch.Tensor)
+			original_image = image_record["original_size"]
+			assert torch.jit.isinstance(original_image,torch.Tensor)
 			masks = self.postprocess_masks(
 				low_res_masks,
-				input_size=image_record["image"].shape[-2:],
-				original_size=image_record["original_size"],
+				input_size=(input_image.shape[-2],input_image.shape[-1]),
+				original_size=(original_image[0],original_image[1]),
 			)
 			masks = masks > self.mask_threshold
 			outputs.append(
@@ -147,8 +151,8 @@ class Sam(nn.Module):
 	def postprocess_masks(
 		self,
 		masks: torch.Tensor,
-		input_size: Tuple[int, ...],
-		original_size: Tuple[int, ...],
+		input_size: Tuple[int, int],
+		original_size: Tuple[int, int],
 	) -> torch.Tensor:
 		"""
 		Remove padding and upscale masks to the original image size.
