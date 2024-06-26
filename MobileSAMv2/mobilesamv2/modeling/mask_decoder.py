@@ -12,6 +12,7 @@ from typing import List, Tuple, Type
 
 from .common import LayerNorm2d
 
+from typing import Optional
 
 class MaskDecoder(nn.Module):
     def __init__(
@@ -75,7 +76,7 @@ class MaskDecoder(nn.Module):
         sparse_prompt_embeddings: torch.Tensor,
         dense_prompt_embeddings: torch.Tensor,
         multimask_output: bool,
-        simple_type=False,
+        simple_type: Optional[bool] = False,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Predict masks given image and prompt embeddings.
@@ -92,7 +93,7 @@ class MaskDecoder(nn.Module):
           torch.Tensor: batched predicted masks
           torch.Tensor: batched predictions of mask quality
         """
-        if (simple_type==False):
+        if simple_type is None or (not simple_type):
             masks, iou_pred = self.predict_masks(
                 image_embeddings=image_embeddings,
                 image_pe=image_pe,
@@ -110,6 +111,7 @@ class MaskDecoder(nn.Module):
             mask_slice = slice(1, None)
         else:
             mask_slice = slice(0, 1)
+        mask_slice = slice(1, None)
         masks = masks[:, mask_slice, :, :]
         iou_pred = iou_pred[:, mask_slice]
         return masks, iou_pred
