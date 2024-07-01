@@ -1,7 +1,8 @@
 import torch
 import numpy as np
 import os
-from mobile_sam import sam_model_registry, SamPredictor
+#from mobile_sam import sam_model_registry, SamPredictor
+from MobileSAMv2.mobilesamv2 import SamPredictor, sam_model_registry
 from mobile_sam.utils.transforms import ResizeLongestSide
 from MobileSAMv2.mobilesamv2.build_sam import build_sam_vit_b
 import sys
@@ -30,16 +31,20 @@ class Model(torch.nn.Module):
 		super().__init__()
 		self.sam = build_sam_vit_b()
 		self.sam.to(device='cpu')
-		self.predictor = SamPredictor(self.sam)
+		self.predictor:SamPredictor = SamPredictor()
 		self.image_size = image_size
-	def forward(self, x):
-		return torch.as_tensor([[[0]*1024]*720]*3, device='cpu')
-		self.predictor.set_torch_image(x, (self.image_size))
-		masks, scores, logits = self.predictor.predict(
-		point_coords=[[0,0]],
-		point_labels=[0],
-		multimask_output=True,
+	def forward(self, x)->torch.Tensor:
+		#self.predictor.set_torch_image(x, (self.image_size))
+		#return torch.as_tensor([[[0]*1024]*720]*3, device='cpu')
+		return self.predictor.predict_torch(
+		point_coords=torch.tensor([[0,0]]),
+		point_labels=torch.tensor([0]))
+		"""
+		masks, scores, logits = self.predictor.predict_torch(
+		point_coords=torch.tensor([[0,0]]),
+		point_labels=torch.tensor([0]),
 	)
+		"""
 		return logits
 
 model = Model(image_size, checkpoint, model_type)

@@ -16,7 +16,6 @@ from .utils import _get_clones, inverse_sigmoid, multi_scale_deformable_attn_pyt
 __all__ = ('TransformerEncoderLayer', 'TransformerLayer', 'TransformerBlock', 'MLPBlock', 'LayerNorm2d', 'AIFI',
            'DeformableTransformerDecoder', 'DeformableTransformerDecoderLayer', 'MSDeformAttn', 'MLP')
 
-
 class TransformerEncoderLayer(nn.Module):
     """Transformer Encoder."""
 
