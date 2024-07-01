@@ -31,7 +31,7 @@ class Model(torch.nn.Module):
 		super().__init__()
 		self.sam = build_sam_vit_b()
 		self.sam.to(device='cpu')
-		self.predictor:SamPredictor = SamPredictor()
+		self.predictor:SamPredictor = SamPredictor(self.sam)
 		self.image_size = image_size
 	def forward(self, x)->torch.Tensor:
 		#self.predictor.set_torch_image(x, (self.image_size))
