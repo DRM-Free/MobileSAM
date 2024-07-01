@@ -6,6 +6,9 @@ from MobileSAMv2.mobilesamv2 import SamPredictor, sam_model_registry
 from mobile_sam.utils.transforms import ResizeLongestSide
 from MobileSAMv2.mobilesamv2.build_sam import build_sam_vit_b
 import sys
+
+from MobileSAMv2.mobilesamv2.modeling import ImageEncoderViT
+
 sys.path.append("MobileSAMv2")
 checkpoint = 'weights/mobile_sam.pt'
 model_type = 'vit_t'
@@ -29,9 +32,13 @@ input_image_torch = input_image_torch.permute(
 class Model(torch.nn.Module):
 	def __init__(self, image_size, checkpoint, model_type):
 		super().__init__()
+		## Script intermediate functions for debug
+		torch.jit.script(ImageEncoderViT())
+		torch.jit.script(build_sam_vit_b)
+		## End script intermediate functions
 		self.sam = build_sam_vit_b()
 		self.sam.to(device='cpu')
-		self.predictor:SamPredictor = SamPredictor(self.sam)
+		self.predictor = SamPredictor(self.sam)
 		self.image_size = image_size
 	def forward(self, x)->torch.Tensor:
 		#self.predictor.set_torch_image(x, (self.image_size))
