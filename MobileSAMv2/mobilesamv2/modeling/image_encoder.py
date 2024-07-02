@@ -32,7 +32,7 @@ class ImageEncoderViT(nn.Module):
 		use_rel_pos: bool = False,
 		rel_pos_zero_init: bool = True,
 		window_size: int = 0,
-		global_attn_indexes: Tuple[int, ...] = (),
+		global_attn_indexes: Tuple[int, int, int, int] = (),
 	) -> None:
 		"""
 		Args:

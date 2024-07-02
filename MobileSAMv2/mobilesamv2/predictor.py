@@ -7,7 +7,8 @@
 import numpy as np
 import torch
 
-from mobilesamv2.modeling import Sam
+#from mobilesamv2.modeling import Sam
+from MobileSAMv2.mobilesamv2.modeling import Sam
 from typing import Tuple
 from .utils.transforms import ResizeLongestSide
 
@@ -24,7 +25,7 @@ class SamPredictor:
 		  sam_model (Sam): The model to use for mask prediction.
 		"""
 		#self.feature_name=0
-		self.sam = sam
+		self.sam : Sam = sam
 		return
 
 	@torch.no_grad()
