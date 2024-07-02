@@ -36,11 +36,10 @@ class Model(torch.nn.Module):
 
 		self.sam : Sam = build_sam_vit_b()
 		self.sam.to(device='cpu')
-		torch.jit.script(SamPredictor(self.sam))
 		self.predictor : SamPredictor = SamPredictor(self.sam)
 		self.image_size = image_size
 	def forward(self, x)->torch.Tensor:
-		#self.predictor.set_torch_image(x, (self.image_size))
+		self.predictor.set_torch_image(x, (self.image_size))
 		#return torch.as_tensor([[[0]*1024]*720]*3, device='cpu')
 		return self.predictor.predict_torch(
 		point_coords=torch.tensor([[0,0]]),
@@ -64,6 +63,9 @@ prompt_encoder = PromptEncoder(
 	input_image_size=(4, 4),
 	mask_in_chans=16,
 )
+
+torch.jit.script(prompt_encoder)
+
 mask_decoder = MaskDecoder(
 	num_multimask_outputs=3,
 	transformer=TwoWayTransformer(
@@ -80,10 +82,10 @@ mask_decoder = MaskDecoder(
 image_encoder = ImageEncoderViT()
 sam = Sam(image_encoder,prompt_encoder,mask_decoder)
 torch.jit.script(Sam(image_encoder,prompt_encoder,mask_decoder))
-
+torch.jit.script(SamPredictor(sam))
 ## End script intermediate functions
 
 model = Model(image_size, checkpoint, model_type)
 #model_trace = torch.jit.trace(model, input_image_torch).save("mobilesam_logits.pt")
-#model_script = torch.jit.script(model).save("mobilesam_logits.pt")
-model_script = torch.jit.trace(model).save("mobilesam_logits.pt")
+model_script = torch.jit.script(model).save("mobilesam_logits.pt")
+#model_script = torch.jit.trace(model).save("mobilesam_logits.pt")

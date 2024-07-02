@@ -89,7 +89,6 @@ class SamPredictor:
 		# print(cc-aa, ',')
 		# import pdb;pdb.set_trace()
 		
-		
 	def predict(
 		self,
 		point_coords: torch.Tensor = None,
@@ -151,9 +150,9 @@ class SamPredictor:
 		# import pdb; pdb.set_trace()
 		
 		
-		masks_np = masks[0].detach().cpu().numpy()
-		iou_predictions_np = iou_predictions[0].detach().cpu().numpy()
-		low_res_masks_np = low_res_masks[0].detach().cpu().numpy()
+		masks_np = masks[0]
+		iou_predictions_np = iou_predictions[0]
+		low_res_masks_np = low_res_masks[0]
 		return masks_np, iou_predictions_np, low_res_masks_np
 
 	@torch.no_grad()
@@ -204,7 +203,7 @@ class SamPredictor:
 	   
 		# Embed prompts
 		# import pdb;pdb.set_trace()
-		sparse_embeddings, dense_embeddings = self.model.prompt_encoder(
+		sparse_embeddings, dense_embeddings = self.model.prompt_encoder.forward(
 			points=points,
 			boxes=None,
 			masks=None,
