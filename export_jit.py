@@ -85,4 +85,5 @@ torch.jit.script(Sam(image_encoder,prompt_encoder,mask_decoder))
 
 model = Model(image_size, checkpoint, model_type)
 #model_trace = torch.jit.trace(model, input_image_torch).save("mobilesam_logits.pt")
-model_script = torch.jit.script(model).save("mobilesam_logits.pt")
+#model_script = torch.jit.script(model).save("mobilesam_logits.pt")
+model_script = torch.jit.trace(model).save("mobilesam_logits.pt")
