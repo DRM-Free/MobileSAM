@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 #from mobilesamv2.modeling import Sam
-from MobileSAMv2.mobilesamv2.modeling import Sam
+from .modeling.sam import Sam
 from typing import Tuple
 from .utils.transforms import ResizeLongestSide
 
@@ -16,7 +16,7 @@ from .utils.transforms import ResizeLongestSide
 class SamPredictor:
 	def __init__(
 		self,
-		sam
+		sam : Sam
 	) -> None:
 		"""
 		Uses SAM to calculate the image embedding for an image, and then
@@ -25,6 +25,7 @@ class SamPredictor:
 		  sam_model (Sam): The model to use for mask prediction.
 		"""
 		#self.feature_name=0
+		#self.sam = torch.jit.annotate(Sam, sam)
 		self.sam : Sam = sam
 		return
 

@@ -7,9 +7,9 @@ from mobile_sam.utils.transforms import ResizeLongestSide
 from MobileSAMv2.mobilesamv2.build_sam import build_sam_vit_b
 import sys
 
-from MobileSAMv2.mobilesamv2.modeling import ImageEncoderViT, Sam
+from MobileSAMv2.mobilesamv2.modeling import ImageEncoderViT, Sam, MaskDecoder, PromptEncoder, TwoWayTransformer
 from MobileSAMv2.mobilesamv2.modeling.image_encoder import Block
-
+from MobileSAMv2.mobilesamv2.modeling.sam import Sam
 sys.path.append("MobileSAMv2")
 checkpoint = 'weights/mobile_sam.pt'
 model_type = 'vit_t'
@@ -33,11 +33,7 @@ input_image_torch = input_image_torch.permute(
 class Model(torch.nn.Module):
 	def __init__(self, image_size, checkpoint, model_type):
 		super().__init__()
-		## Script intermediate functions for debug
-		#torch.jit.script(Block(1,1))
-		#torch.jit.script(ImageEncoderViT())
-		#torch.jit.script(build_sam_vit_b())
-		## End script intermediate functions
+
 		self.sam : Sam = build_sam_vit_b()
 		self.sam.to(device='cpu')
 		torch.jit.script(SamPredictor(self.sam))
@@ -56,6 +52,36 @@ class Model(torch.nn.Module):
 	)
 		"""
 		return logits
+
+## Script intermediate functions for debug
+#torch.jit.script(Block(1,1))
+#torch.jit.script(ImageEncoderViT())
+#torch.jit.script(build_sam_vit_b())
+
+prompt_encoder = PromptEncoder(
+	embed_dim=4,
+	image_embedding_size=(4, 4),
+	input_image_size=(4, 4),
+	mask_in_chans=16,
+)
+mask_decoder = MaskDecoder(
+	num_multimask_outputs=3,
+	transformer=TwoWayTransformer(
+		depth=2,
+		embedding_dim=4,
+		mlp_dim=2048,
+		num_heads=2,
+	),
+	transformer_dim=4,
+	iou_head_depth=3,
+	iou_head_hidden_dim=256,
+)
+
+image_encoder = ImageEncoderViT()
+sam = Sam(image_encoder,prompt_encoder,mask_decoder)
+torch.jit.script(Sam(image_encoder,prompt_encoder,mask_decoder))
+
+## End script intermediate functions
 
 model = Model(image_size, checkpoint, model_type)
 #model_trace = torch.jit.trace(model, input_image_torch).save("mobilesam_logits.pt")
