@@ -25,9 +25,11 @@ class SamPredictor:
 		Arguments:
 		  sam_model (Sam): The model to use for mask prediction.
 		"""
-		self.model = sam_model
+		self.model : Sam = sam_model
+		self.features : Optional[torch.Tensor] = None
 		#self.transform = ResizeLongestSide(sam_model.image_encoder.img_size)
 		#self.feature_name=0
+
 	def set_image(
 		self,
 		image: torch.Tensor,
@@ -159,7 +161,7 @@ class SamPredictor:
 	def predict_torch(
 		self,
 		point_coords: Optional[torch.Tensor],
-		point_labels: Optional[torch.Tensor],
+		point_labels: torch.Tensor,
 	) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
 		"""
 		Predict masks for the given input prompts, using the currently set image.
@@ -210,7 +212,7 @@ class SamPredictor:
 		)
 		#import pdb;pdb.set_trace()
 		# Predict masks
-		low_res_masks, iou_predictions = self.model.mask_decoder(
+		low_res_masks, iou_predictions = self.model.mask_decoder.forward(
 			image_embeddings=self.features,
 			image_pe=self.model.prompt_encoder.get_dense_pe(),
 			sparse_prompt_embeddings=sparse_embeddings,
